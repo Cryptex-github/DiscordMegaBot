@@ -25,24 +25,29 @@ class Chat(commands.Cog):
         self.ms = [self.m]
         self.mm = message
     
+    async def (self, message, embed):
+        try:
+            await message.edit(embed=embed)
+        except discord.HTTPException:
+             for m in self.ms:
+                m.embeds[0].description = f'**Main message**: {self.mm}\n[jump!]({ctx.message.jump_url}) **{ctx.author.name.title()}**: {message}'
+                self.bot.loop.create_task(self.edit(m, m.embeds[0]))
+    async def update(self, ctx, message):
+        if self.currently_playing is False:
+            return await ctx.send('No currently playing chat')
+        if self.m.embeds[0].description.endswith('\n'):
+            for m in self.ms:
+                m.embeds[0].description = f'[jump!]({ctx.message.jump_url}) **{ctx.author.name.title()}**: {message}'
+                self.bot.loop.create_task(self.edit(m, m.embeds[0]))
+        else:
+            for m in self.ms:
+                m.embeds[0].description += f'\n[jump!]({ctx.message.jump_url}) **{ctx.author.name.title()}**: {message}'
+                self.bot.loop.create_task(self.edit(m, m.embeds[0]))
+        
     @chat.command(brief='Responds to currently running chat', aliases=['reply', 'r'])
     async def response(self, ctx, *, message:str):
-        try:
-            if self.currently_playing is False:
-                return await ctx.send('No currently playing chat')
-            if self.m.embeds[0].description.endswith('\n'):
-                for m in self.ms:
-                    m.embeds[0].description = f'[jump!]({ctx.message.jump_url}) **{ctx.author.name.title()}**: {message}'
-                    await m.edit(embed=m.embeds[0])
-            else:
-                for m in self.ms:
-                    m.embeds[0].description += f'\n[jump!]({ctx.message.jump_url}) **{ctx.author.name.title()}**: {message}'
-                    await m.edit(embed=m.embeds[0])
-        except discord.HTTPException:
-            for m in self.ms:
-                m.embeds[0].description = f'**Main message**: {self.mm}\n[jump!]({ctx.message.jump_url}) **{ctx.author.name.title()}**: {message}'
-                await m.edit(embed=m.embeds[0])
-    
+        self.bot.loop.create_task(self.update(ctx, message))
+        
     @chat.command(brief='Stops currently running chat')
     async def stop(self, ctx):
         if self.currently_playing is False:
